@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 
 
-def get_coord(width=128, device='cuda:0'):
+def get_coord(width=128, device='cpu'):
     coord = torch.zeros([1, 2, width, width])
     for i in range(width):
         for j in range(width):
@@ -22,7 +22,7 @@ def gray_div_01_tensor(x):
     return x
 
 
-def Decoder_cv(f, width=128):
+def Decoder_cv(f, width=128, device='cpu'):
     # size = 10
     '''
     (x0; y0; x1; y1; x2; y2; r0; t0; r1; t1; R; G; B)
@@ -56,11 +56,11 @@ def Decoder_cv(f, width=128):
         result = np.round(result)
         stroke.append(result)
     stroke = np.array(stroke).astype('float32')
-    stroke = torch.from_numpy(stroke).cuda()
+    stroke = torch.from_numpy(stroke).to(device)
     return stroke
 
 
-def decode(x, canvas):  # b * (10 + 3)
+def decode(x, canvas, device='cpu'):  # b * (10 + 3)
     x = x.view(-1, 9)
     f = x[:, :8]
     ac_or_not = x[:, -1:].round()
@@ -71,7 +71,7 @@ def decode(x, canvas):  # b * (10 + 3)
 
     # d = torch.round(test_render(f))
 
-    d = torch.round(Decoder_cv(f))  # torch.Size([96, 8])
+    d = torch.round(Decoder_cv(f, device=device))  # torch.Size([96, 8])
     stroke = 1 - d
     # s.save_middle_img(d, name='d')
     # s.save_middle_img(stroke, name='stroke0')
@@ -96,8 +96,8 @@ def decode(x, canvas):  # b * (10 + 3)
     return canvas
 
 
-def decode_list(x, canvas):  # b * (10 + 3)
-    canvas = decode(x, canvas)
+def decode_list(x, canvas, device='cpu'):  # b * (10 + 3)
+    canvas = decode(x, canvas, device=device)
     res = []
     for i in range(1):
         res.append(canvas)

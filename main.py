@@ -36,7 +36,7 @@ d.del_file(output_dir)
 
 if __name__ == '__main__':
     actor = ResNet(5, 18, 9)
-    actor.load_state_dict(torch.load(args.actor))
+    actor.load_state_dict(torch.load(args.actor, map_location=device))
     actor = actor.to(device).eval()
 
     img = cv2.imread(args.img, cv2.IMREAD_GRAYSCALE)
@@ -93,7 +93,7 @@ if __name__ == '__main__':
                 stepnum = T * i / args.max_step
                 actions = actor(torch.cat([canvas, patch_img, stepnum, coord], 1))
                 p2s.reset_gt_patch(gt=patch_img)
-                canvas, res = vu.decode_list(actions, canvas)
+                canvas, res = vu.decode_list(actions, canvas, device=device)
                 print('divided canvas step {}, Loss = {}'.format(i, ((canvas - patch_img) ** 2).mean()))
                 p2s.add_action_div(actions)  # =================================
                 vu.save_img(canvas, args.imgid, divide_number=divide, width=width, origin_shape=origin_shape,
